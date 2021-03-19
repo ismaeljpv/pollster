@@ -1,16 +1,83 @@
-{% extends 'base.html' %}
-{% block content %}
+{% extends 'base.html' %} {% block content %}
+<script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+
 <h1 class="mb-5 text-center">{{ question.question_text }}</h1>
 
 <ul class="list-group mb-5">
-	{% for choice in question.choice_set.all %}
-	<li class="list-group-item">
-		<p style="width: 80%; display: inline-block;">{{ choice.choice_text }}</p>
-        <span class="badge" style="background-color: rgb(93, 230, 51); text-align: right; ">{{ choice.votes }} vote{{ choice.votes | pluralize }}</span>
-	</li>
-	{% endfor %}
+  {% for choice in question.choice_set.all %}
+  <li class="list-group-item">
+    <p style="width: 80%; display: inline-block">{{ choice.choice_text }}</p>
+    <span
+      class="badge"
+      style="background-color: rgb(93, 230, 51); text-align: right"
+      >{{ choice.votes }} vote{{ choice.votes | pluralize }}</span
+    >
+  </li>
+  {% endfor %}
 </ul>
 
-<a class="btn btn-secondary" href="{% url 'polls:index' %}">Back To Polls</a>
-<a class="btn btn-dark" href="{% url 'polls:detail' question.id %}">Vote again?</a>
+<div id="myChart"></div>
+
+<div class="mt-3 mb-3 text-center">
+  <a class="btn btn-secondary" href="{% url 'polls:index' %}">Back To Polls</a>
+  <a class="btn btn-dark" href="{% url 'polls:detail' question.id %}">Vote again?</a>
+</div>
+
+<script>
+  let state = {
+	  items: [],
+	  values: []
+  }	
+
+  let id = "{{question.id}}";
+  const URL = `http://localhost:8080/polls/${id}/graphic/`;
+  const request = {
+    headers: {
+      "Content-type": "application/json",
+    },
+    method: "GET",
+  };
+
+  fetch(URL, request)
+    .then((data) => data.json())
+    .then((response) => {
+  		
+		for (let i in response) {
+			let key = Object.keys(response[i])[0];
+			let value = Object.values(response[i])[0];
+			state.items.push(key);
+			state.values.push(value);
+		}
+		console.log(state)
+		buildChart(state);
+	
+	}).catch((error) => console.log(error));
+
+  buildChart = (state) => {
+    let charData = {
+      type: "bar",
+      title: {
+        text: "Poll Results",
+      },
+      legend: {
+        draggable: true,
+      },
+      scaleX: {
+        label: { text: "Options" },
+        values: state.items,
+        fontSize: 2
+      },
+      scaleY: {
+        label: { text: "Votes" },
+      },
+      series: [{ values: state.values }],
+    };
+
+    zingchart.render({
+      id: "myChart",
+      data: charData,
+    });
+  };
+
+</script>
 {% endblock %}

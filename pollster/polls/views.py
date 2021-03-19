@@ -1,5 +1,5 @@
 from django.template import loader
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
@@ -43,3 +43,14 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+
+# Fetch data for graphics:
+def graphicData(request, question_id):
+  results = []
+  question = Question.objects.get(pk=question_id)
+  votes = question.choice_set.all()
+
+  for v in votes:
+    results.append({ v.choice_text: v.votes })
+
+  return JsonResponse(results, safe=False)
